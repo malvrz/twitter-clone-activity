@@ -10,7 +10,7 @@ import {
 } from '@loopback/repository';
 import {
   del, get,
-  getModelSchemaRef, HttpErrors, param, patch, post, put, requestBody,
+  getModelSchemaRef, HttpErrors, param, patch, put, requestBody,
   response
 } from '@loopback/rest';
 import {SecurityBindings, UserProfile} from '@loopback/security';
@@ -21,33 +21,8 @@ import {TweetRepository} from '../repositories';
 export class TweetController {
   constructor(
     @repository(TweetRepository) public tweetRepository: TweetRepository,
+    @inject(SecurityBindings.USER) public user: UserProfile,
   ) { }
-
-  @post('/tweets')
-  @response(200, {
-    description: 'Tweet model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Tweet)}},
-  })
-  async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Tweet, {
-            title: 'NewTweet',
-            exclude: ['id'],
-          }),
-        },
-      },
-    })
-    tweet: Omit<Tweet, 'id'>,
-    @inject(SecurityBindings.USER) user: UserProfile
-  ): Promise<Tweet | null> {
-    const newTweet = {
-      ...tweet,
-      user_id: user.id
-    }
-    return this.tweetRepository.create(newTweet);
-  }
 
   @get('/tweets/count')
   @response(200, {
@@ -76,25 +51,6 @@ export class TweetController {
     @param.filter(Tweet) filter?: Filter<Tweet>,
   ): Promise<Tweet[]> {
     return this.tweetRepository.find(filter);
-  }
-
-  @patch('/tweets')
-  @response(200, {
-    description: 'Tweet PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Tweet, {partial: true}),
-        },
-      },
-    })
-    tweet: Tweet,
-    @param.where(Tweet) where?: Where<Tweet>,
-  ): Promise<Count> {
-    return this.tweetRepository.updateAll(tweet, where);
   }
 
   @get('/tweets/{id}')
@@ -127,12 +83,11 @@ export class TweetController {
       },
     })
     tweet: Tweet,
-    @inject(SecurityBindings.USER) user: UserProfile,
   ): Promise<void> {
     const record = await this.tweetRepository.find({
       where: {
         id,
-        user_id: user.id,
+        userId: this.user.id,
       }
     })
 
@@ -151,7 +106,17 @@ export class TweetController {
     @param.path.number('id') id: string,
     @requestBody() tweet: Tweet,
   ): Promise<void> {
-    await this.tweetRepository.replaceById(id, tweet);
+    const record = await this.tweetRepository.find({
+      where: {
+        id,
+        userId: this.user.id,
+      }
+    })
+    if (record.length) {
+      return await this.tweetRepository.updateById(id, tweet);
+    }
+
+    throw new HttpErrors.NotFound('Tweet not found.')
   }
 
   @del('/tweets/{id}')
@@ -159,6 +124,11 @@ export class TweetController {
     description: 'Tweet DELETE success',
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.tweetRepository.deleteById(id);
+
+    const filter = {
+      and: [{_id: id}, {userId: this.user.id}]
+    }
+
+    await this.tweetRepository.deleteAll(filter);
   }
 }

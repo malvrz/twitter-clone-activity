@@ -11,7 +11,10 @@ import {
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {DbDataSource} from './datasources';
+import {CustomUserServiceBindings} from './key';
+import {UserCredentialsRepository, UserRepository} from './repositories';
 import {MySequence} from './sequence';
+import {MyUserService} from './services/user.service';
 
 export {ApplicationConfig};
 
@@ -36,6 +39,8 @@ export class BasicTwitterApplication extends BootMixin(
     this.component(AuthenticationComponent)
     this.component(JWTAuthenticationComponent)
 
+    this.setUpBindings()
+
     this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME)
 
     this.projectRoot = __dirname;
@@ -48,5 +53,11 @@ export class BasicTwitterApplication extends BootMixin(
         nested: true,
       },
     };
+  }
+
+  private setUpBindings() {
+    this.bind(CustomUserServiceBindings.USER_SERVICE).toClass(MyUserService)
+    this.bind(UserServiceBindings.USER_REPOSITORY).toClass(UserRepository)
+    this.bind(UserServiceBindings.USER_CREDENTIALS_REPOSITORY).toClass(UserCredentialsRepository)
   }
 }
