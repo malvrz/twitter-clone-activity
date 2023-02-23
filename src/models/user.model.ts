@@ -1,6 +1,7 @@
-import {Entity, hasOne, model, property, hasMany} from '@loopback/repository';
-import {UserCredentials} from './user-credentials.model';
+import {Entity, hasMany, hasOne, model, property} from '@loopback/repository';
+import {Followships} from './followships.model';
 import {Tweet} from './tweet.model';
+import {UserCredentials} from './user-credentials.model';
 
 @model()
 export class User extends Entity {
@@ -32,6 +33,15 @@ export class User extends Entity {
 
   @hasMany(() => Tweet)
   tweets: Tweet[];
+
+  @hasMany(() => User, {
+    through: {
+      model: () => Followships,
+      keyFrom: 'followerId',
+      keyTo: 'followingId',
+    }
+  })
+  followships: User[];
 
   constructor(data?: Partial<User>) {
     super(data);
