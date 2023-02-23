@@ -1,18 +1,12 @@
 import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
-  Count,
-  CountSchema,
   Filter,
-  repository,
-  Where
+  repository
 } from '@loopback/repository';
 import {
-  del,
   get,
-  getModelSchemaRef,
-  getWhereSchemaFor,
-  param,
+  getModelSchemaRef, param,
   post,
   requestBody
 } from '@loopback/rest';
@@ -75,20 +69,5 @@ export class UserTweetController {
     @param.query.object('filter') filter?: Filter<Tweet>,
   ): Promise<Omit<Tweet[], 'userId'>> {
     return this.userRepository.tweets(id).find(filter);
-  }
-
-  @del('/user/{id}/tweets', {
-    responses: {
-      '200': {
-        description: 'User.Tweet DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async delete(
-    @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(Tweet)) where?: Where<Tweet>,
-  ): Promise<Count> {
-    return this.userRepository.tweets(id).delete(where);
   }
 }
