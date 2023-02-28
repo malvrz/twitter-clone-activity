@@ -10,8 +10,8 @@ import {
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import {DbDataSource} from './datasources';
 import {CustomUserServiceBindings} from './key';
+import {MultiTenancyComponent} from './multi-tenancy/component';
 import {UserCredentialsRepository, UserRepository} from './repositories';
 import {MySequence} from './sequence';
 import {MyUserService} from './services/user.service';
@@ -38,10 +38,9 @@ export class BasicTwitterApplication extends BootMixin(
 
     this.component(AuthenticationComponent)
     this.component(JWTAuthenticationComponent)
+    this.component(MultiTenancyComponent)
 
     this.setUpBindings()
-
-    this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME)
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here

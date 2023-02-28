@@ -6,14 +6,17 @@ import {get, HttpErrors, post, requestBody} from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {genSalt, hash} from 'bcryptjs';
 import {CustomUserServiceBindings} from '../key';
+import {MultiTenancyBindings} from '../multi-tenancy/keys';
+import {Tenant} from '../multi-tenancy/types';
 import {MyUserService} from '../services/user.service';
 
 export class UserController {
   constructor(
+    @repository(UserRepository) protected userRepository: UserRepository,
     @inject(TokenServiceBindings.TOKEN_SERVICE) public jwtService: TokenService,
     @inject(CustomUserServiceBindings.USER_SERVICE) public userService: MyUserService,
     @inject(SecurityBindings.USER, {optional: true}) public user: UserProfile,
-    @repository(UserRepository) protected userRepository: UserRepository,
+    @inject(MultiTenancyBindings.CURRENT_TENANT, {optional: true}) private tenant?: Tenant,
   ) { }
 
   @post('/users/login')
@@ -43,6 +46,10 @@ export class UserController {
       }
     }
   ) user: User) {
+    if (this.tenant?.id !== null) {
+      user.tenantId = this.tenant?.id
+    }
+
     const userExists = await this.userRepository.findOne({
       where: {
         email: user.email

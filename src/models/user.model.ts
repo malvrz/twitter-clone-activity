@@ -14,6 +14,11 @@ export class User extends Entity {
 
   @property({
     type: 'string',
+  })
+  tenantId?: string;
+
+  @property({
+    type: 'string',
     required: true,
     index: {
       unique: true

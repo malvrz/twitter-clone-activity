@@ -125,10 +125,6 @@ export class TweetController {
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
 
-    const filter = {
-      and: [{_id: id}, {userId: this.user.id}]
-    }
-
-    await this.tweetRepository.deleteAll(filter);
+    await this.tweetRepository.deleteById(id)
   }
 }
