@@ -92,10 +92,13 @@ export class UserUserController {
         ]
       })
 
-    if (isAlreadyFollowed.count) {
-      throw new HttpErrors.BadRequest('User already followed.')
+    if (this.userProfile.id !== followedUser.id) {
+      if (isAlreadyFollowed) {
+        throw new HttpErrors.BadRequest('User already followed.')
+      }
+      return await this.userRepository.followships(this.userProfile.id).link(followedUser.id)
     }
-    return await this.userRepository.followships(this.userProfile.id).link(followedUser.id)
+    throw new HttpErrors.BadRequest('Unexpected error occured.')
   }
 
   @post('/users/{id}/unfollow', {
@@ -115,13 +118,8 @@ export class UserUserController {
   }
 
   private async getFollowShipsId(filter: {}, key: string) {
-    let ret: string[] = []
     const records = await this.followshipsRepository.find({where: filter})
-
-    _.map(records, (rec: any) => {
-      ret.push(rec[key])
-    })
-
+    let ret = _.map(records, key)
     return ret
   }
 }
